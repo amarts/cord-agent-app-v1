@@ -7,6 +7,7 @@ import { Init as CordInit, AccountConfiguration } from "./cord/init";
 import { dbConfig } from "./config/dbconfig";
 import ScoreRouter from "./router/score";
 import SchemaRouter from "./router/schema";
+import SertoRouter from "./router/serto-schema";
 import SpaceRouter from "./router/space";
 import RecordRouter from "./router/record";
 import VerifyRouter from "./router/verify";
@@ -19,6 +20,7 @@ const openApiDocumentation = JSON.parse(
 
 app.use("/api/v1/scores", ScoreRouter);
 app.use("/api/v1/schemas", SchemaRouter);
+app.use("/api/schemas/v1", SertoRouter);
 app.use("/api/v1/spaces", SpaceRouter);
 app.use("/api/v1/:spaceId/records", RecordRouter);
 app.use("/api/v1/verify", VerifyRouter);

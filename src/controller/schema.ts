@@ -150,8 +150,83 @@ export class Schema {
 	    return;
 	}
     }
+
+    public static async index1(req: express.Request, res: express.Response) {
+	try {
+	    const schemas = await getConnection()
+		  .getRepository(SchemaEntity)
+		  .createQueryBuilder("schema")
+		  .getMany();
+		  if (!schemas || schemas.length === 0) {
+		      return res.status(404).json({error: 'empty array'});
+		  }
+	    const response = schemas
+		  .filter((s: SchemaEntity) => {
+		      return s.jsonSchema ? true : false;
+		  })
+		  .map((s: SchemaEntity) => {
+		      //s.ipfsHash = [];
+		      return {
+			  ...s,
+			  favourite: 1,
+			  discoverable: true,
+			  name: s.title,
+			  creator: 'Dhiway',
+			  deleted: false,
+			  version: s.versionStr,
+		      };
+		  });
+	    return res.json(response);
+	} catch (err) {
+	    return res.status(500).json({ error: err });
+	}
+    }
+
+    public static async show1(
+	req: express.Request,
+	res: express.Response,
+	version: string,
+	type: string
+    ) {
+	const url = req.params.slug;
+	let query = getConnection()
+            .getRepository(SchemaEntity)
+            .createQueryBuilder('s')
+            .where('s.slug = :url', { url: url });
+	
+	if (version && version !== '') {
+            query = query.andWhere('s.versionStr = :version', { version: version });
+	}
+	
+	const schema = await query.orderBy('s.created_at', 'DESC').getOne();
+	if (!schema) {
+            return res.json({});
+	}
+	if (!type || type === '') {
+            const newS = {
+		...schema,
+		discoverable: true,
+		name: schema.title,
+		creator: 'Dhiway',
+		deleted: false,
+		version: schema.versionStr,
+            };
+
+            return res.json(newS);
+	}
+	if (type === 'json-schema.json') {
+            return res.json(JSON.parse(schema.jsonSchema!));
+	}
+	if (type === 'ld-context.json') {
+            await res.set('Content-Type', 'application/ld+json');
+            return res.json(JSON.parse(schema.ldContext!));
+	}
+	if (type === 'ld-context-plus.json') {
+            return res.json(JSON.parse(schema.ldContextPlus!));
+	}
+    }
     
-    public static async show(req: express.Request, res: express.Response) {
+  public static async show(req: express.Request, res: express.Response) {
     try {
       const schema = await getConnection()
         .getRepository(SchemaEntity)
